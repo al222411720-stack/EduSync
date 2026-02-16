@@ -153,3 +153,6 @@ if __name__ == "__main__":
     # Esto permite que Render elija el puerto automáticamente
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run("main:app", host="0.0.0.0", port=port)
+    # Cambia esto en main.py:
+templates = Jinja2Templates(directory=".") # Antes decía "templates"
+app.mount("/static", StaticFiles(directory="."), name="static") # Antes decía "static"

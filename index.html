@@ -109,9 +109,7 @@
     </div>
 
     <script>
-        // CORRECCIÓN: Detectar automáticamente si estamos en Render o en local
         const API_URL = window.location.hostname === "127.0.0.1" ? "http://127.0.0.1:8000" : "";
-
         let uAct = null; let clActId = null; let grActId = null; let chatInt = null;
 
         function ver(id) { document.querySelectorAll('.auth-screen, .main-layout').forEach(v => v.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
@@ -128,9 +126,9 @@
         }
 
         async function enviarRegistro() {
-            const d = { nombre: document.getElementById('reg-nom').value, usuario: document.getElementById('reg-usr').value, matricula: document.getElementById('reg-mat').value, escuela: document.getElementById('reg-esc').value, correo: document.getElementById('reg-cor').value, rol: document.getElementById('reg-rol').value, password: document.getElementById('reg-pas').value };
+            const d = { nombre: document.getElementById('reg-nom').value, usuario: document.getElementById('reg-usr').value, matricula: document.getElementById('reg-mat').value, escuela: document.getElementById('reg-esc').value, correo: document.getElementById('reg-cor').value, rol: document.getElementById('reg-rol').value, password: document.getElementById('reg-pas').value, foto: "" };
             const res = await fetch(`${API_URL}/registro`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d) });
-            if(res.ok) ver('v-login'); else { const err = await res.json(); alert(err.detail); }
+            if(res.ok) { alert("¡Registro exitoso!"); ver('v-login'); } else { const err = await res.json(); alert(err.detail); }
         }
 
         async function enviarLogin() {
@@ -139,12 +137,12 @@
                 uAct = await res.json(); 
                 actualizarUI();
                 ver('v-dash'); ir('cla'); 
-            } else alert("Error de acceso");
+            } else alert("Usuario o contraseña incorrectos");
         }
 
         function actualizarUI() {
             document.getElementById('disp-name').innerText = uAct.nombre;
-            document.getElementById('sidebar-foto').src = uAct.foto || 'https://via.placeholder.com/150';
+            document.getElementById('sidebar-foto').src = uAct.foto || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + uAct.usuario;
             document.getElementById('disp-info').innerHTML = `${uAct.rol.toUpperCase()} | ${uAct.matricula}<br>${uAct.escuela}`;
             if(uAct.rol==='profesor') document.getElementById('btn-nav-grupos').classList.add('hidden');
             const cont = document.getElementById('controles-clase');
@@ -154,25 +152,47 @@
         async function actualizarPerfil() {
             const upd = { usuario: uAct.usuario, nombre: document.getElementById('upd-nom').value, foto: document.getElementById('upd-foto').value };
             const res = await fetch(`${API_URL}/actualizar_perfil`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(upd) });
-            if(res.ok) {
-                uAct.nombre = upd.nombre; uAct.foto = upd.foto;
-                actualizarUI(); alert("¡Perfil actualizado!");
-            }
+            if(res.ok) { uAct.nombre = upd.nombre; uAct.foto = upd.foto; actualizarUI(); alert("¡Perfil actualizado!"); }
+        }
+
+        // --- FUNCIONES QUE FALTABAN PARA EL DASHBOARD ---
+
+        async function crearClase() {
+            const nombre = prompt("Nombre de la Materia:");
+            if(!nombre) return;
+            await fetch(`${API_URL}/crear_clase`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ nombre_clase: nombre, profesor: uAct.usuario }) });
+            cargarClases();
+        }
+
+        async function unirseClase() {
+            const pin = prompt("Introduce el PIN de la clase:");
+            if(!pin) return;
+            const res = await fetch(`${API_URL}/unirse_clase`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ usuario: uAct.usuario, codigo: pin }) });
+            if(res.ok) cargarClases(); else alert("PIN incorrecto o ya estás unido");
+        }
+
+        async function nuevoGrupo() {
+            const nombre = prompt("Nombre del Grupo de Estudio:");
+            if(!nombre) return;
+            await fetch(`${API_URL}/crear_grupo`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ nombre: nombre, creador: uAct.usuario }) });
+            cargarGrupos();
+        }
+
+        async function entrarAGrupo() {
+            const pin = prompt("PIN del Grupo:");
+            if(!pin) return;
+            await fetch(`${API_URL}/unirse_grupo`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ usuario: uAct.usuario, codigo: pin }) });
+            cargarGrupos();
         }
 
         async function cargarClases() { const res = await fetch(`${API_URL}/mis_clases/${uAct.usuario}`); const data = await res.json(); document.getElementById('lista-clases').innerHTML = data.map(c => `<div class="item-card clase" onclick="abrirClase('${c._id}', '${c.nombre_clase}')"><h3>${c.nombre_clase}</h3><p>PIN: ${c.codigo}</p></div>`).join(''); }
-        
         function abrirClase(id, n) { clActId = id; document.getElementById('det-nombre-clase').innerText = n; ir('clase-detalle'); cargarChat(); chatInt=setInterval(cargarChat, 3000); }
-        
         async function enviarMensaje() { const inp = document.getElementById('chat-input'); if(!inp.value) return; await fetch(`${API_URL}/enviar_mensaje`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ clase_id: clActId, usuario: uAct.nombre, texto: inp.value }) }); inp.value=""; cargarChat(); }
-        
         async function cargarChat() { const res = await fetch(`${API_URL}/obtener_chat/${clActId}`); const msgs = await res.json(); const cont = document.getElementById('chat-messages'); cont.innerHTML = msgs.map(m => `<div class="msg ${m.usuario===uAct.nombre?'mio':'otro'}"><b>${m.usuario}</b><br>${m.texto}</div>`).join(''); cont.scrollTop = cont.scrollHeight; }
-
         async function cargarGrupos() { const res = await fetch(`${API_URL}/mis_grupos/${uAct.usuario}`); const data = await res.json(); document.getElementById('lista-grupos').innerHTML = data.map(g => `<div class="item-card grupo" onclick="abrirDetalleGrupo('${g._id}', '${g.nombre}')"><h3>${g.nombre}</h3><p>PIN: ${g.codigo}</p></div>`).join(''); }
-        
-        async function cargarEventos() { const res = await fetch(`${API_URL}/eventos/${uAct.usuario}`); const data = await res.json(); document.getElementById('lista-eventos').innerHTML = data.map(e => `<div class="ev-card" style="background:white; padding:10px; margin-top:5px; border-radius:5px;"><span><b>${e.fecha}</b>: ${e.titulo}</span></div>`).join(''); }
-        
+        async function cargarEventos() { const res = await fetch(`${API_URL}/eventos/${uAct.usuario}`); const data = await res.json(); document.getElementById('lista-eventos').innerHTML = data.map(e => `<div class="ev-card" style="background:white; padding:10px; margin-top:5px; border-radius:5px; border-left: 5px solid #4361ee;"><span><b>${e.fecha}</b>: ${e.titulo}</span></div>`).join(''); }
         async function guardarEvento() { await fetch(`${API_URL}/eventos`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ usuario: uAct.usuario, titulo: document.getElementById('ev-titulo').value, fecha: document.getElementById('ev-fecha').value, tipo: "Pers", categoria: "Gen" }) }); cargarEventos(); }
     </script>
 </body>
 </html>
+

@@ -2,8 +2,8 @@ import os
 import uvicorn
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles      # <--- REVISA QUE ESTA LÍNEA ESTÉ
-from fastapi.templating import Jinja2Templates  # <--- Y ESTA TAMBIÉN
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from database import db
 
 app = FastAPI()
@@ -16,8 +16,8 @@ app.mount("/static", StaticFiles(directory="."), name="static")
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# --- AQUÍ PEGA TU CÓDIGO DE LOGIN Y REGISTRO ---
-# (Asegúrate de no dejar líneas repetidas de "app = FastAPI()")
+# --- AQUÍ PEGA EL RESTO DE TUS RUTAS (LOGIN, REGISTRO) ---
+# Si no las tienes a la mano, déjalo así para probar que el servidor prenda.
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))

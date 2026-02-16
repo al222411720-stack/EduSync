@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><title>EduSync Pro - Profile Edition</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="v-inicio" class="auth-screen"><div class="auth-card">
+        <h1>EduSync <span style="color:#4361ee">Pro</span></h1>
+        <button class="btn-action" onclick="ver('v-login')">Entrar</button>
+        <button class="btn-action" style="background:#f1f5f9; color:#4361ee; margin-top:10px;" onclick="ver('v-registro')">Crear Cuenta</button>
+    </div></div>
+
+    <div id="v-login" class="auth-screen hidden"><div class="auth-card">
+        <h2>Entrar</h2>
+        <input type="text" id="log-usr" placeholder="Usuario">
+        <input type="password" id="log-pas" placeholder="Contraseña">
+        <button class="btn-action" onclick="enviarLogin()">Acceder</button>
+        <p onclick="ver('v-inicio')" style="cursor:pointer; font-size:0.8rem; color:gray; margin-top:15px;">← Regresar</p>
+    </div></div>
+
+    <div id="v-registro" class="auth-screen hidden"><div class="auth-card">
+        <h2>Registro</h2>
+        <input type="text" id="reg-nom" placeholder="Nombre completo">
+        <input type="text" id="reg-usr" placeholder="Nombre de Usuario">
+        <input type="text" id="reg-mat" placeholder="Matrícula Estudiantil">
+        <input type="text" id="reg-esc" placeholder="Escuela de procedencia">
+        <input type="email" id="reg-cor" placeholder="Correo institucional">
+        <select id="reg-rol"><option value="estudiante">Estudiante</option><option value="profesor">Profesor</option></select>
+        <input type="password" id="reg-pas" placeholder="Contraseña">
+        <button class="btn-action" onclick="enviarRegistro()">Finalizar Registro</button>
+    </div></div>
+
+    <div id="v-dash" class="main-layout hidden">
+        <div class="sidebar">
+            <img id="sidebar-foto" src="" class="profile-img-sidebar">
+            <h2 id="disp-name">...</h2>
+            <div id="disp-info" style="font-size:0.7rem; color:#4361ee; font-weight:bold;"></div>
+            <hr style="opacity:0.1; margin:10px 0;">
+            <button class="btn-action" style="background:transparent; text-align:left;" onclick="ir('cla')">🏫 Materias</button>
+            <button id="btn-nav-grupos" class="btn-action" style="background:transparent; text-align:left;" onclick="ir('grupos')">👥 Grupos Alumnos</button>
+            <button class="btn-action" style="background:transparent; text-align:left;" onclick="ir('cal')">📅 Mi Agenda</button>
+            <button class="btn-action" style="background:transparent; text-align:left; color:#f59e0b;" onclick="ir('perfil')">⚙️ Mi Perfil</button>
+            <button class="btn-action" style="margin-top:auto; background:#f87171;" onclick="location.reload()">Salir</button>
+        </div>
+
+        <div class="content">
+            <div id="sec-perfil" class="sec-box hidden">
+                <h1>Ajustes de Perfil</h1>
+                <div class="item-card" style="max-width:450px; text-align:center;">
+                    <img id="edit-foto-preview" src="" class="profile-img-large">
+                    <input type="text" id="upd-nom" placeholder="Nuevo nombre completo">
+                    <input type="text" id="upd-foto" placeholder="URL de nueva foto de perfil" oninput="document.getElementById('edit-foto-preview').src=this.value">
+                    <button class="btn-action" onclick="actualizarPerfil()" style="margin-top:15px;">Guardar Cambios</button>
+                </div>
+            </div>
+
+            <div id="sec-cla" class="sec-box">
+                <div style="display:flex; justify-content:space-between; align-items:center;"><h1>Materias</h1><div id="controles-clase"></div></div>
+                <div id="lista-clases" class="grid-layout"></div>
+            </div>
+
+            <div id="sec-clase-detalle" class="sec-box hidden">
+                <button onclick="ir('cla')" style="cursor:pointer; border:none; background:none; color:var(--primary); font-weight:bold;">← Volver</button>
+                <h2 id="det-nombre-clase"></h2>
+                <div id="tab-chat" class="tab-clase">
+                    <div class="chat-container"><div id="chat-messages" class="chat-messages"></div><div style="display:flex; padding:10px; gap:5px;"><input type="text" id="chat-input" placeholder="Mensaje..."><button class="btn-action" style="width:80px;" onclick="enviarMensaje()">OK</button></div></div>
+                </div>
+            </div>
+
+            <div id="sec-grupos" class="sec-box hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center;"><h1>Grupos de Estudio</h1><div><button class="btn-action" style="background:var(--success); width:auto; padding:8px 15px;" onclick="nuevoGrupo()">+ Crear</button> <button class="btn-action" style="background:var(--dark); width:auto; padding:8px 15px;" onclick="entrarAGrupo()"># Unirse</button></div></div>
+                <div id="lista-grupos" class="grid-layout"></div>
+            </div>
+
+            <div id="sec-grupo-detalle" class="sec-box hidden">
+                <button onclick="ir('grupos')" style="cursor:pointer; border:none; background:none; color:var(--success); font-weight:bold;">← Volver</button>
+                <h2 id="det-nombre-grupo"></h2>
+                <div class="chat-container"><div id="chat-g-messages" class="chat-messages"></div><div style="display:flex; padding:10px; gap:5px;"><input type="text" id="chat-g-input" placeholder="Chat privado..."><button class="btn-action" style="width:80px; background:var(--success);" onclick="enviarMensajeGrupo()">OK</button></div></div>
+            </div>
+
+            <div id="sec-cal" class="sec-box hidden">
+                <h1>Mi Agenda</h1>
+                <div class="item-card" style="max-width:400px;">
+                    <input type="text" id="ev-titulo" placeholder="Tarea o Evento...">
+                    <input type="date" id="ev-fecha">
+                    <button class="btn-action" onclick="guardarEvento()">Agregar</button>
+                </div>
+                <div id="lista-eventos"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uAct = null; let clActId = null; let grActId = null; let chatInt = null;
+
+        function ver(id) { document.querySelectorAll('.auth-screen, .main-layout').forEach(v => v.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+        function ir(id) { 
+            clearInterval(chatInt); document.querySelectorAll('.sec-box').forEach(s => s.classList.add('hidden')); 
+            document.getElementById('sec-'+id).classList.remove('hidden'); 
+            if(id==='cla') cargarClases(); if(id==='grupos') cargarGrupos(); if(id==='cal') cargarEventos();
+            if(id==='perfil') {
+                document.getElementById('upd-nom').value = uAct.nombre;
+                document.getElementById('upd-foto').value = uAct.foto;
+                document.getElementById('edit-foto-preview').src = uAct.foto;
+            }
+        }
+
+        async function enviarRegistro() {
+            const d = { nombre: document.getElementById('reg-nom').value, usuario: document.getElementById('reg-usr').value, matricula: document.getElementById('reg-mat').value, escuela: document.getElementById('reg-esc').value, correo: document.getElementById('reg-cor').value, rol: document.getElementById('reg-rol').value, password: document.getElementById('reg-pas').value };
+            const res = await fetch('http://127.0.0.1:8000/registro', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d) });
+            if(res.ok) ver('v-login'); else { const err = await res.json(); alert(err.detail); }
+        }
+
+        async function enviarLogin() {
+            const res = await fetch('http://127.0.0.1:8000/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ usuario: document.getElementById('log-usr').value, password: document.getElementById('log-pas').value }) });
+            if(res.ok) { 
+                uAct = await res.json(); 
+                actualizarUI();
+                ver('v-dash'); ir('cla'); 
+            } else alert("Error de acceso");
+        }
+
+        function actualizarUI() {
+            document.getElementById('disp-name').innerText = uAct.nombre;
+            document.getElementById('sidebar-foto').src = uAct.foto;
+            document.getElementById('disp-info').innerHTML = `${uAct.rol.toUpperCase()} | ${uAct.matricula}<br>${uAct.escuela}`;
+            if(uAct.rol==='profesor') document.getElementById('btn-nav-grupos').classList.add('hidden');
+            const cont = document.getElementById('controles-clase');
+            cont.innerHTML = uAct.rol==='profesor' ? `<button class="btn-action" style="width:auto; padding:10px 20px;" onclick="crearClase()">+ Nueva Clase</button>` : `<button class="btn-action" style="background:var(--success); width:auto; padding:10px 20px;" onclick="unirseClase()"># Unirse</button>`;
+        }
+
+        async function actualizarPerfil() {
+            const upd = { usuario: uAct.usuario, nombre: document.getElementById('upd-nom').value, foto: document.getElementById('upd-foto').value };
+            const res = await fetch('http://127.0.0.1:8000/actualizar_perfil', { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(upd) });
+            if(res.ok) {
+                uAct.nombre = upd.nombre; uAct.foto = upd.foto;
+                actualizarUI(); alert("¡Perfil actualizado!");
+            }
+        }
+
+        // --- FUNCIONES DE CLASES, GRUPOS Y CHATS (MANTENIDAS) ---
+        async function cargarClases() { const res = await fetch(`http://127.0.0.1:8000/mis_clases/${uAct.usuario}`); const data = await res.json(); document.getElementById('lista-clases').innerHTML = data.map(c => `<div class="item-card clase" onclick="abrirClase('${c._id}', '${c.nombre_clase}')"><h3>${c.nombre_clase}</h3><p>PIN: ${c.codigo}</p></div>`).join(''); }
+        function abrirClase(id, n) { clActId = id; document.getElementById('det-nombre-clase').innerText = n; ir('clase-detalle'); cargarChat(); chatInt=setInterval(cargarChat, 3000); }
+        async function enviarMensaje() { const inp = document.getElementById('chat-input'); await fetch('http://127.0.0.1:8000/enviar_mensaje', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ clase_id: clActId, usuario: uAct.nombre, texto: inp.value }) }); inp.value=""; cargarChat(); }
+        async function cargarChat() { const res = await fetch(`http://127.0.0.1:8000/obtener_chat/${clActId}`); const msgs = await res.json(); const cont = document.getElementById('chat-messages'); cont.innerHTML = msgs.map(m => `<div class="msg ${m.usuario===uAct.nombre?'mio':'otro'}"><b>${m.usuario}</b><br>${m.texto}</div>`).join(''); cont.scrollTop = cont.scrollHeight; }
+
+        async function cargarGrupos() { const res = await fetch(`http://127.0.0.1:8000/mis_grupos/${uAct.usuario}`); const data = await res.json(); document.getElementById('lista-grupos').innerHTML = data.map(g => `<div class="item-card grupo" onclick="abrirDetalleGrupo('${g._id}', '${g.nombre}')"><h3>${g.nombre}</h3><p>PIN: ${g.codigo}</p></div>`).join(''); }
+        function abrirDetalleGrupo(id, n) { grActId = id; document.getElementById('det-nombre-grupo').innerText = n; ir('grupo-detalle'); cargarChatGrupo(); chatInt=setInterval(cargarChatGrupo, 3000); }
+        async function enviarMensajeGrupo() { const inp = document.getElementById('chat-g-input'); await fetch('http://127.0.0.1:8000/enviar_mensaje_grupo', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ grupo_id: grActId, usuario: uAct.nombre, texto: inp.value }) }); inp.value=""; cargarChatGrupo(); }
+        async function cargarChatGrupo() { const res = await fetch(`http://127.0.0.1:8000/obtener_chat_grupo/${grActId}`); const msgs = await res.json(); const cont = document.getElementById('chat-g-messages'); cont.innerHTML = msgs.map(m => `<div class="msg ${m.usuario===uAct.nombre?'mio grupo-mio':'otro'}"><b>${m.usuario}</b><br>${m.texto}</div>`).join(''); cont.scrollTop = cont.scrollHeight; }
+        
+        async function cargarEventos() { const res = await fetch(`http://127.0.0.1:8000/eventos/${uAct.usuario}`); const data = await res.json(); document.getElementById('lista-eventos').innerHTML = data.map(e => `<div class="ev-card"><span><b>${e.fecha}</b>: ${e.titulo}</span></div>`).join(''); }
+        async function guardarEvento() { await fetch('http://127.0.0.1:8000/eventos', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ usuario: uAct.usuario, titulo: document.getElementById('ev-titulo').value, fecha: document.getElementById('ev-fecha').value, tipo: "Pers", categoria: "Gen" }) }); cargarEventos(); }
+    </script>
+</body>
+</html>

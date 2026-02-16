@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+motor
+certifi
+dnspython
+pydantic
+pydantic[email]
+python-multipart

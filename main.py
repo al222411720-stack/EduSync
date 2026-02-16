@@ -4,30 +4,48 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-# --- IMPORTANTE: Añade esta línea para conectar con tu database.py ---
-from database import db 
+from database import db  # Conexión a tu MongoDB
 
-# 1. Iniciar App
 app = FastAPI()
 
-# 2. Configurar archivos
+# 1. Configuración de archivos
 templates = Jinja2Templates(directory=".")
 app.mount("/static", StaticFiles(directory="."), name="static")
 
-# 3. Ruta principal
+# 2. Ruta principal (Carga el HTML)
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# 4. Ruta de registro (Ya corregida para recibir los datos de tu JS)
+# 3. RUTA DE REGISTRO (Esto es lo que faltaba)
 @app.post("/registro")
 async def registro_usuario(datos: dict):
     try:
-        # Aquí insertamos los datos en tu colección de MongoDB
+        # Verificamos si el usuario ya existe para no duplicarlo
+        existe = await db.usuarios.find_one({"usuario": datos["usuario"]})
+        if existe:
+            return {"detail": "El nombre de usuario ya está en uso"}, 400
+        
         await db.usuarios.insert_one(datos)
-        return {"message": "Usuario registrado con éxito"}
+        return {"message": "¡Registro exitoso!"}
     except Exception as e:
-        return {"error": str(e)}
+        return {"detail": str(e)}, 500
+
+# 4. RUTA DE LOGIN (Esto es lo que causaba el Error de acceso)
+@app.post("/login")
+async def login_usuario(credenciales: dict):
+    user = await db.usuarios.find_one({
+        "usuario": credenciales["usuario"],
+        "password": credenciales["password"]
+    })
+    
+    if user:
+        user["_id"] = str(user["_id"]) # Convertimos el ID de MongoDB a texto
+        return user
+    else:
+        # Si no lo encuentra, mandamos error 401
+        from fastapi import HTTPException
+        raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
 
 # 5. Configuración para Render
 if __name__ == "__main__":

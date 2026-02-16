@@ -1,8 +1,8 @@
 fastapi
 uvicorn
+jinja2
 motor
 certifi
 dnspython
 pydantic
-pydantic[email]
 python-multipart

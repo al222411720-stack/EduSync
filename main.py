@@ -1,53 +1,61 @@
 import os
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from database import db  # Conexión a tu MongoDB
+from database import db 
 
 app = FastAPI()
 
-# 1. Configuración de archivos
+# Configuración de archivos (Jinja2 para el HTML y Static para el CSS)
 templates = Jinja2Templates(directory=".")
 app.mount("/static", StaticFiles(directory="."), name="static")
 
-# 2. Ruta principal (Carga el HTML)
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# 3. RUTA DE REGISTRO (Esto es lo que faltaba)
+# --- RUTA DE REGISTRO ---
 @app.post("/registro")
 async def registro_usuario(datos: dict):
     try:
-        # Verificamos si el usuario ya existe para no duplicarlo
+        # Verificamos si ya existe el usuario
         existe = await db.usuarios.find_one({"usuario": datos["usuario"]})
         if existe:
-            return {"detail": "El nombre de usuario ya está en uso"}, 400
+            raise HTTPException(status_code=400, detail="El usuario ya existe")
         
         await db.usuarios.insert_one(datos)
         return {"message": "¡Registro exitoso!"}
     except Exception as e:
-        return {"detail": str(e)}, 500
+        raise HTTPException(status_code=500, detail=str(e))
 
-# 4. RUTA DE LOGIN (Esto es lo que causaba el Error de acceso)
+# --- RUTA DE LOGIN ---
 @app.post("/login")
 async def login_usuario(credenciales: dict):
     user = await db.usuarios.find_one({
         "usuario": credenciales["usuario"],
         "password": credenciales["password"]
     })
-    
     if user:
-        user["_id"] = str(user["_id"]) # Convertimos el ID de MongoDB a texto
+        user["_id"] = str(user["_id"])
         return user
     else:
-        # Si no lo encuentra, mandamos error 401
-        from fastapi import HTTPException
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
 
-# 5. Configuración para Render
+# --- RUTAS DE SOPORTE PARA EL DASHBOARD ---
+@app.get("/mis_clases/{usuario}")
+async def mis_clases(usuario: str):
+    clases = await db.clases.find({"$or": [{"profesor": usuario}, {"alumnos": usuario}]}).to_list(100)
+    for c in clases: c["_id"] = str(c["_id"])
+    return clases
+
+@app.get("/eventos/{usuario}")
+async def mis_eventos(usuario: str):
+    evs = await db.eventos.find({"usuario": usuario}).to_list(100)
+    for e in evs: e["_id"] = str(e["_id"])
+    return evs
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
